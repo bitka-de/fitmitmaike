@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/inside/auth.php';
+
 const KURS_DATA_DIR = __DIR__ . '/inside/kurs_data';
 
 function e(string $value): string
@@ -137,9 +139,61 @@ function formatZeitSlot(array $slot): string
     return $prefix . ' · ' . $von . ' bis ' . $bis . ' Uhr';
 }
 
+function renderMarkdown(string $text): string
+{
+    $text = trim($text);
+    if ($text === '') {
+        return '';
+    }
+
+    // Escape HTML first
+    $text = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+
+    // Convert markdown to HTML
+    // Bold: **text** -> <strong>text</strong>
+    $text = preg_replace('/\*\*(.+?)\*\*/s', '<strong>$1</strong>', $text);
+
+    // Italic: *text* -> <em>text</em> (but not ** or ***)
+    $text = preg_replace('/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/s', '<em>$1</em>', $text);
+
+    // Headings: ### text -> <h3>text</h3>
+    $text = preg_replace('/^### (.+?)$/m', '<h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: var(--text-color);">$1</h3>', $text);
+    $text = preg_replace('/^## (.+?)$/m', '<h2 style="margin: 18px 0 10px; font-size: 1.25rem; color: var(--text-color);">$1</h2>', $text);
+
+    // Lists: - item -> <li>item</li> wrapped in <ul>
+    $lines = explode("\n", $text);
+    $inList = false;
+    $result = [];
+
+    foreach ($lines as $line) {
+        if (preg_match('/^- (.+)$/', $line, $matches)) {
+            if (!$inList) {
+                $result[] = '<ul style="margin: 12px 0; padding-left: 24px; line-height: 1.6;">';
+                $inList = true;
+            }
+            $result[] = '<li>' . trim($matches[1]) . '</li>';
+        } else {
+            if ($inList) {
+                $result[] = '</ul>';
+                $inList = false;
+            }
+            if (trim($line) !== '') {
+                $result[] = '<p style="margin: 8px 0; line-height: 1.6;">' . $line . '</p>';
+            }
+        }
+    }
+
+    if ($inList) {
+        $result[] = '</ul>';
+    }
+
+    return implode("\n", $result);
+}
+
 $slug = isset($_GET['slug']) ? normalizeKursSlug((string) $_GET['slug']) : '';
 $kurs = $slug !== '' ? loadKurs($slug) : null;
 $allKurse = loadAllKurse();
+$isLoggedIn = isSecure();
 
 $pageTitle = $slug !== '' && $kurs !== null
     ? e($kurs['name']) . ' - Kursanmeldung | Fit mit Maike'
@@ -198,44 +252,36 @@ $pageTitle = $slug !== '' && $kurs !== null
         }
 
         .hero-shell {
-            background: linear-gradient(145deg, color-mix(in oklab, var(--brand-color) 88%, black), var(--brand-color));
-            border-radius: calc(var(--border-radius) * 1.4);
-            color: #fff;
-            padding: clamp(1.2rem, 3vw, 2.3rem);
-            box-shadow: 0 26px 52px color-mix(in srgb, black 14%, transparent);
-            margin-bottom: clamp(1.2rem, 3vw, 2.1rem);
+            background: color-mix(in oklab, var(--brand-color) 92%, black);
+            border-radius: var(--border-radius);
+            color: var(--brand-color);
+            padding: clamp(1.5rem, 3vw, 2.5rem);
+            box-shadow: 0 2px 8px color-mix(in srgb, black 6%, transparent);
+            margin-bottom: clamp(1.5rem, 3vw, 2.2rem);
             position: relative;
             overflow: hidden;
+            border: 1px solid color-mix(in oklab, var(--brand-color) 20%, white);
         }
 
         .hero-shell::after {
-            content: "";
-            position: absolute;
-            width: 280px;
-            height: 280px;
-            border-radius: 50%;
-            right: -90px;
-            top: -130px;
-            background: color-mix(in oklab, white 20%, transparent);
-            opacity: 0.36;
-            pointer-events: none;
+            display: none;
         }
 
         .hero-shell .eyebrow,
         .hero-shell h1,
         .hero-shell p {
-            color: #fff;
+            color: var(--text-color);
             position: relative;
             z-index: 1;
         }
 
         .hero-shell .eyebrow {
-            opacity: 0.85;
+            opacity: 0.7;
         }
 
         .hero-shell p {
             max-width: 62ch;
-            opacity: 0.9;
+            opacity: 0.85;
         }
 
         .hero-metrics {
@@ -248,47 +294,50 @@ $pageTitle = $slug !== '' && $kurs !== null
         }
 
         .hero-metric {
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.12);
-            padding: 0.62rem 0.72rem;
-            backdrop-filter: blur(2px);
+            border: 1px solid color-mix(in oklab, var(--brand-color) 20%, white);
+            border-radius: 8px;
+            background: transparent;
+            padding: 0.75rem 0.85rem;
         }
 
         .hero-metric .label {
             margin: 0;
-            font-size: 0.67rem;
+            font-size: 0.68rem;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
-            opacity: 0.82;
+            letter-spacing: 0.1em;
+            opacity: 0.7;
+            color: var(--text-muted);
+            font-weight: 700;
         }
 
         .hero-metric .value {
-            margin: 0.22rem 0 0;
-            font-size: 1rem;
+            margin: 0.3rem 0 0;
+            font-size: 1.05rem;
             font-weight: 700;
+            color: var(--text-color);
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(285px, 1fr));
-            gap: 1.15rem;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.4rem;
         }
 
         .course-card {
             background: #fff;
             border: 1px solid var(--card-border);
             border-radius: var(--border-radius);
-            box-shadow: var(--card-shadow);
+            box-shadow: 0 2px 4px color-mix(in srgb, black 4%, transparent);
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            transition: transform 0.22s ease, box-shadow 0.24s ease;
+            transition: all 0.24s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .course-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 22px 40px color-mix(in srgb, black 12%, transparent);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px color-mix(in srgb, black 10%, transparent);
+            border-color: color-mix(in oklab, var(--brand-color) 35%, white);
         }
 
         .course-image {
@@ -296,49 +345,96 @@ $pageTitle = $slug !== '' && $kurs !== null
             aspect-ratio: 16/10;
             object-fit: cover;
             display: block;
-            border-bottom: 1px solid var(--card-border);
+            position: relative;
             background: color-mix(in oklab, var(--text-color) 5%, white);
         }
 
         .course-card-head {
-            padding: 1rem 1.1rem 0.85rem;
-            background: linear-gradient(140deg, color-mix(in oklab, var(--brand-color) 75%, black), var(--brand-color));
-            color: #fff;
+            padding: 1.2rem 1.25rem 1rem;
+            background: color-mix(in oklab, var(--brand-color) 92%, black);
+            color: var(--brand-color);
+            border-bottom: 1px solid color-mix(in oklab, var(--brand-color) 20%, white);
+        }
+
+        .course-card-head::after {
+            display: none;
         }
 
         .course-card-head .niveau {
             display: inline-block;
-            margin-bottom: 0.5rem;
-            font-size: 0.72rem;
+            margin-bottom: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 700;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.35);
-            border-radius: 999px;
-            padding: 0.2rem 0.65rem;
+            background: transparent;
+            border: 1.5px solid color-mix(in oklab, var(--brand-color) 40%, white);
+            border-radius: 4px;
+            padding: 0.35rem 0.65rem;
         }
 
         .course-card-head h2 {
             margin: 0;
-            font-size: 1.22rem;
-            line-height: 1.35;
-            color: #fff;
+            font-size: 1.25rem;
+            line-height: 1.3;
+            color: var(--text-color);
+            font-weight: 700;
         }
 
         .course-card-body {
-            padding: 1rem 1.1rem 1.2rem;
+            padding: 1.15rem 1.25rem 1.1rem;
             display: flex;
             flex-direction: column;
-            gap: 0.85rem;
+            gap: 0.9rem;
             flex: 1;
+        }
+
+        .course-card-body > p:first-of-type {
+            color: color-mix(in oklab, var(--brand-color) 75%, black);
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin: 0;
         }
 
         .course-card-body p {
             margin: 0;
             color: var(--text-muted);
-            line-height: 1.55;
-            font-size: 0.93rem;
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+
+        .course-meta {
+            display: grid;
+            gap: 0.65rem;
+            padding: 0.8rem;
+            background: #f9fafb;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            margin: 0;
+        }
+
+        .course-meta-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .course-meta-item strong {
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        .course-meta-icon {
+            flex-shrink: 0;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
         }
 
         .chips {
@@ -361,18 +457,72 @@ $pageTitle = $slug !== '' && $kurs !== null
 
         .course-card-footer {
             border-top: 1px solid var(--card-border);
-            padding: 0.9rem 1.1rem 1rem;
+            padding: 0.95rem 1.25rem 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 0.8rem;
+            gap: 0.85rem;
             flex-wrap: wrap;
+            background: transparent;
         }
 
         .course-price {
             font-weight: 700;
-            color: color-mix(in oklab, var(--brand-color) 80%, black);
-            font-size: 0.95rem;
+            color: color-mix(in oklab, var(--brand-color) 82%, black);
+            font-size: 0.98rem;
+            letter-spacing: -0.01em;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+
+        .button-small {
+            padding: 0.55rem 0.95rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            transition: all 0.16s ease;
+            position: relative;
+        }
+
+        .button-small:hover {
+            transform: translateY(-1px);
+        }
+
+        .button-small:active {
+            transform: translateY(0);
+        }
+
+        .button-small.primary {
+            background: var(--brand-color);
+            color: #fff;
+            border-color: var(--brand-color);
+        }
+
+        .button-small.primary:hover {
+            background: color-mix(in oklab, var(--brand-color) 85%, black);
+            border-color: color-mix(in oklab, var(--brand-color) 85%, black);
+        }
+
+        .button-small.whatsapp {
+            background: #25d366;
+            color: #fff;
+            border-color: #25d366;
+        }
+
+        .button-small.whatsapp:hover {
+            background: #1fad56;
+            border-color: #1fad56;
         }
 
         .not-found,
@@ -380,20 +530,21 @@ $pageTitle = $slug !== '' && $kurs !== null
             background: #fff;
             border: 1px solid var(--card-border);
             border-radius: var(--border-radius);
-            padding: 1.8rem 1.1rem;
+            padding: 2rem 1.5rem;
             text-align: center;
         }
 
         .not-found p,
         .empty-state p {
             color: var(--text-muted);
-            margin: 0.75rem 0 1.1rem;
+            margin: 0.8rem 0 1.3rem;
+            font-size: 0.93rem;
         }
 
         .detail-layout {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 340px;
-            gap: 1.2rem;
+            grid-template-columns: minmax(0, 1fr) 360px;
+            gap: 1.4rem;
             align-items: start;
         }
 
@@ -408,8 +559,14 @@ $pageTitle = $slug !== '' && $kurs !== null
             background: #fff;
             border: 1px solid var(--card-border);
             border-radius: var(--border-radius);
-            box-shadow: var(--card-shadow);
+            box-shadow: 0 2px 4px color-mix(in srgb, black 4%, transparent);
             overflow: hidden;
+            transition: box-shadow 0.24s ease;
+        }
+
+        .detail-main:hover,
+        .detail-side:hover {
+            box-shadow: 0 6px 12px color-mix(in srgb, black 6%, transparent);
         }
 
         .detail-intro {
@@ -452,6 +609,15 @@ $pageTitle = $slug !== '' && $kurs !== null
 
         .detail-image-wrap {
             position: relative;
+            overflow: hidden;
+        }
+
+        .detail-image {
+            transition: transform 0.3s ease;
+        }
+
+        .detail-image-wrap:hover .detail-image {
+            transform: scale(1.01);
         }
 
         .detail-image-overlay {
@@ -459,60 +625,64 @@ $pageTitle = $slug !== '' && $kurs !== null
             left: 0;
             right: 0;
             bottom: 0;
-            padding: 1.2rem 1.2rem 0.85rem;
-            background: linear-gradient(180deg, transparent 10%, rgba(15, 23, 42, 0.82) 100%);
+            padding: 1.5rem 1.5rem 1.1rem;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.55) 40%, rgba(15, 23, 42, 0.92) 100%);
             color: #fff;
         }
 
         .detail-image-overlay .title-mini {
             margin: 0;
-            font-size: 0.78rem;
-            letter-spacing: 0.08em;
+            font-size: 0.74rem;
+            letter-spacing: 0.11em;
             text-transform: uppercase;
-            opacity: 0.85;
+            opacity: 0.8;
+            font-weight: 700;
         }
 
         .detail-image-overlay .subtitle-mini {
-            margin: 0.3rem 0 0;
-            font-size: 1.02rem;
-            font-weight: 600;
-            line-height: 1.35;
+            margin: 0.45rem 0 0;
+            font-size: 1.08rem;
+            font-weight: 700;
+            line-height: 1.3;
+            letter-spacing: -0.01em;
         }
 
         .detail-head {
-            padding: 1.4rem 1.25rem 1rem;
-            background: linear-gradient(140deg, color-mix(in oklab, var(--brand-color) 75%, black), var(--brand-color));
-            color: #fff;
+            padding: 1.5rem 1.5rem 1.2rem;
+            background: color-mix(in oklab, var(--brand-color) 92%, black);
+            color: var(--brand-color);
+            border-bottom: 1px solid color-mix(in oklab, var(--brand-color) 20%, white);
         }
 
         .detail-head .niveau {
             display: inline-block;
-            margin-bottom: 0.55rem;
-            font-size: 0.72rem;
+            margin-bottom: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 700;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.35);
-            border-radius: 999px;
-            padding: 0.2rem 0.65rem;
+            background: transparent;
+            border: 1.5px solid color-mix(in oklab, var(--brand-color) 40%, white);
+            border-radius: 4px;
+            padding: 0.35rem 0.65rem;
         }
 
         .detail-head h1 {
             margin: 0;
-            color: #fff;
-            font-size: clamp(1.35rem, 3.5vw, 2rem);
+            color: var(--text-color);
+            font-size: clamp(1.4rem, 3.5vw, 2rem);
             line-height: 1.2;
+            font-weight: 700;
         }
 
         .detail-head p {
-            margin: 0.45rem 0 0;
-            color: rgba(255, 255, 255, 0.85);
-            font-size: 0.92rem;
+            margin: 0.5rem 0 0;
+            color: var(--text-muted);
+            font-size: 0.93rem;
         }
 
         .detail-body {
-            padding: 1.2rem 1.25rem 1.4rem;
+            padding: 1.5rem 1.5rem 1.8rem;
         }
 
         .detail-top-row {
@@ -525,14 +695,14 @@ $pageTitle = $slug !== '' && $kurs !== null
         .top-pill {
             display: inline-flex;
             align-items: center;
-            gap: 0.34rem;
-            font-size: 0.76rem;
+            gap: 0.4rem;
+            font-size: 0.77rem;
             line-height: 1;
-            border-radius: 999px;
-            padding: 0.4rem 0.62rem;
-            background: color-mix(in oklab, var(--brand-color) 8%, #fff);
-            border: 1px solid color-mix(in oklab, var(--brand-color) 20%, #fff);
-            color: color-mix(in oklab, var(--brand-color) 80%, black);
+            border-radius: 4px;
+            padding: 0.5rem 0.75rem;
+            background: #f0f3f8;
+            border: 1px solid color-mix(in oklab, var(--brand-color) 20%, white);
+            color: var(--text-color);
             font-weight: 600;
         }
 
@@ -543,47 +713,64 @@ $pageTitle = $slug !== '' && $kurs !== null
         }
 
         .detail-section-title {
-            margin: 0 0 0.65rem;
-            font-size: 0.72rem;
+            margin: 1.5rem 0 0.75rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 0.09em;
+            letter-spacing: 0.12em;
             color: var(--text-muted);
+            font-weight: 700;
+        }
+
+        .detail-section-title:first-of-type {
+            margin-top: 0;
         }
 
         .detail-desc {
-            margin: 1rem 0 0;
+            margin: 0.75rem 0 0;
             color: var(--text-muted);
             line-height: 1.7;
-            font-size: 0.95rem;
+            font-size: 0.96rem;
         }
 
         .fact-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 0.65rem;
-            margin-top: 0.35rem;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.2rem;
+            margin-top: 1.2rem;
         }
 
         .fact-card {
-            border: 1px solid var(--card-border);
-            border-radius: 12px;
-            padding: 0.72rem 0.78rem;
-            background: linear-gradient(180deg, #fff, #f8fafc);
+            border: none;
+            border-bottom: 2px solid color-mix(in oklab, var(--brand-color) 30%, white);
+            border-radius: 0;
+            padding: 0 0 0.85rem 0;
+            background: transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        .fact-card:hover {
+            border-bottom-color: color-mix(in oklab, var(--brand-color) 60%, black);
+            background: transparent;
+            box-shadow: none;
+            transform: none;
         }
 
         .fact-card .fact-label {
-            font-size: 0.66rem;
+            font-size: 0.7rem;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.12em;
             color: var(--text-muted);
-            margin: 0 0 0.25rem;
+            margin: 0 0 0.5rem;
+            font-weight: 700;
         }
 
         .fact-card .fact-value {
-            font-size: 0.92rem;
+            font-size: 1rem;
             color: var(--text-color);
             font-weight: 600;
             margin: 0;
+            letter-spacing: -0.01em;
+            line-height: 1.4;
         }
 
         .schedule-list {
@@ -591,40 +778,47 @@ $pageTitle = $slug !== '' && $kurs !== null
             margin: 0;
             padding: 0;
             display: grid;
-            gap: 0.45rem;
+            gap: 0.8rem;
         }
 
         .schedule-list li {
-            font-size: 0.84rem;
+            font-size: 0.88rem;
             color: var(--text-color);
-            line-height: 1.4;
-            border: 1px dashed color-mix(in oklab, var(--brand-color) 25%, white);
-            border-radius: 10px;
-            padding: 0.4rem 0.5rem;
-            background: color-mix(in oklab, var(--brand-color) 6%, white);
+            line-height: 1.5;
+            border: none;
+            border-left: 3px solid var(--brand-color);
+            border-radius: 0;
+            padding: 0.5rem 0 0.5rem 0.85rem;
+            background: transparent;
         }
 
         .side-head {
-            padding: 1rem 1rem 0.9rem;
-            background: linear-gradient(140deg, color-mix(in oklab, var(--brand-color) 75%, black), var(--brand-color));
-            color: #fff;
+            padding: 1.35rem 1.35rem 1.15rem;
+            background: color-mix(in oklab, var(--brand-color) 92%, black);
+            color: var(--brand-color);
+            position: relative;
+            border-bottom: 1px solid color-mix(in oklab, var(--brand-color) 20%, white);
+        }
+
+        .side-head::after {
+            display: none;
         }
 
         .side-head h3 {
             margin: 0;
-            font-size: 1rem;
-            color: #fff;
+            font-size: 1.1rem;
+            color: var(--text-color);
+            font-weight: 700;
         }
 
         .side-head p {
-            margin: 0.25rem 0 0;
-            font-size: 0.83rem;
-            opacity: 0.88;
-            color: #fff;
+            margin: 0.4rem 0 0;
+            font-size: 0.82rem;
+            color: var(--text-muted);
         }
 
         .side-body {
-            padding: 1rem;
+            padding: 1.4rem;
         }
 
         .detail-side {
@@ -639,62 +833,69 @@ $pageTitle = $slug !== '' && $kurs !== null
         }
 
         .side-points {
-            margin: 0.1rem 0 0.9rem;
+            margin: 0.15rem 0 1.1rem;
             padding: 0;
             list-style: none;
             display: grid;
-            gap: 0.35rem;
+            gap: 0.5rem;
         }
 
         .side-points li {
-            font-size: 0.82rem;
+            font-size: 0.81rem;
             color: var(--text-muted);
+            line-height: 1.5;
+            padding-left: 0.3rem;
         }
 
         .price-box {
-            margin-bottom: 0.95rem;
-            padding: 0.7rem 0.8rem;
-            border-radius: var(--border-radius);
-            background: color-mix(in oklab, var(--brand-color) 9%, white);
-            border: 1px solid color-mix(in oklab, var(--brand-color) 24%, white);
+            margin-bottom: 1.2rem;
+            padding: 1rem 1.05rem;
+            border-radius: 8px;
+            background: color-mix(in oklab, var(--brand-color) 5%, white);
+            border: 1px solid color-mix(in oklab, var(--brand-color) 18%, white);
         }
 
         .price-label {
             margin: 0;
-            font-size: 0.66rem;
+            font-size: 0.67rem;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--brand-color);
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            font-weight: 700;
         }
 
         .price-value {
-            margin: 0.2rem 0 0;
-            font-size: 1.05rem;
+            margin: 0.4rem 0 0;
+            font-size: 1.2rem;
             font-weight: 700;
-            color: color-mix(in oklab, var(--brand-color) 80%, black);
+            color: color-mix(in oklab, var(--brand-color) 85%, black);
+            letter-spacing: -0.01em;
         }
 
         .field {
-            margin-bottom: 0.8rem;
+            margin-bottom: 1rem;
         }
 
         .field label {
             display: block;
-            margin-bottom: 0.28rem;
-            font-size: 0.82rem;
-            font-weight: 600;
+            margin-bottom: 0.4rem;
+            font-size: 0.8rem;
+            font-weight: 650;
             color: var(--text-color);
+            letter-spacing: -0.01em;
         }
 
         .field input {
             width: 100%;
-            padding: 0.72rem 0.78rem;
-            border-radius: var(--border-radius);
-            border: 1.5px solid color-mix(in oklab, var(--text-color) 16%, transparent);
-            background: var(--background-color);
+            padding: 0.8rem 0.85rem;
+            border-radius: 6px;
+            border: 1px solid color-mix(in oklab, var(--text-color) 14%, transparent);
+            background: #fff;
             color: var(--text-color);
             font: inherit;
+            font-size: 0.92rem;
             box-sizing: border-box;
+            transition: all 0.16s ease;
         }
 
         .field input:focus {
@@ -704,26 +905,28 @@ $pageTitle = $slug !== '' && $kurs !== null
         }
 
         .field input::placeholder {
-            color: color-mix(in oklab, var(--text-muted) 88%, white);
+            color: color-mix(in oklab, var(--text-muted) 85%, white);
         }
 
         .submit-btn {
             width: 100%;
-            border: 0;
-            border-radius: var(--border-radius);
-            padding: 0.86rem;
+            border: 1px solid var(--brand-color);
+            border-radius: 6px;
+            padding: 0.92rem 0.86rem;
             font: inherit;
             font-weight: 700;
+            font-size: 0.93rem;
             cursor: pointer;
             color: #fff;
             background: var(--brand-color);
-            transition: transform 0.12s ease, background 0.2s ease;
+            transition: all 0.16s ease;
             letter-spacing: 0.01em;
         }
 
         .submit-btn:hover {
             transform: translateY(-1px);
-            background: color-mix(in oklab, var(--brand-color) 82%, black);
+            background: color-mix(in oklab, var(--brand-color) 85%, black);
+            border-color: color-mix(in oklab, var(--brand-color) 85%, black);
         }
 
         .submit-btn:active {
@@ -731,29 +934,86 @@ $pageTitle = $slug !== '' && $kurs !== null
         }
 
         .submit-btn:disabled {
-            opacity: 0.65;
+            opacity: 0.6;
             cursor: not-allowed;
             transform: none;
         }
 
         .form-msg {
-            margin-top: 0.8rem;
-            border-radius: var(--border-radius);
-            padding: 0.68rem 0.78rem;
+            margin-top: 1rem;
+            border-radius: 6px;
+            padding: 0.8rem 0.9rem;
             display: none;
-            font-size: 0.88rem;
+            font-size: 0.85rem;
+            line-height: 1.5;
         }
 
         .form-msg.ok {
             display: block;
             color: #166534;
             background: #dcfce7;
+            border: 1px solid #86efac;
         }
 
         .form-msg.err {
             display: block;
             color: #991b1b;
             background: #fee2e2;
+            border: 1px solid #fca5a5;
+        }
+
+        .floating-edit-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.9rem 1.3rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            background: var(--brand-color);
+            color: #fff;
+            box-shadow: 0 8px 24px color-mix(in srgb, var(--brand-color) 45%, transparent);
+            transition: all 0.2s ease;
+            text-decoration: none;
+            z-index: 40;
+        }
+
+        .floating-edit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px color-mix(in srgb, var(--brand-color) 50%, transparent);
+        }
+
+        .floating-edit-btn:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 640px) {
+            .floating-edit-btn {
+                bottom: 1.5rem;
+                right: 1.5rem;
+                padding: 0.8rem 1.1rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        .whatsapp-section {
+            margin-top: 1.2rem;
+            padding-top: 1.2rem;
+            border-top: 1px solid var(--card-border);
+        }
+
+        .whatsapp-label {
+            margin: 0 0 0.85rem;
+            font-size: 0.79rem;
+            color: var(--text-muted);
+            font-weight: 650;
+            letter-spacing: -0.01em;
         }
     </style>
 </head>
@@ -817,6 +1077,11 @@ $pageTitle = $slug !== '' && $kurs !== null
                             <?php if (!empty($kurs['max_teilnehmer'])): ?><span class="top-pill">👥 Max. <?= e((string) $kurs['max_teilnehmer']) ?></span><?php endif; ?>
                         </div>
 
+                        <?php if (!empty($kurs['zielgruppe'])): ?>
+                            <h2 class="detail-section-title">Zielgruppe</h2>
+                            <p class="detail-desc" style="margin-top: 0.5rem;"><?= e($kurs['zielgruppe']) ?></p>
+                        <?php endif; ?>
+
                         <h2 class="detail-section-title">Kursinfos</h2>
                         <div class="fact-grid">
                             <?php if (!empty($zeitSlots)): ?>
@@ -835,39 +1100,51 @@ $pageTitle = $slug !== '' && $kurs !== null
                                     <p class="fact-value">📍 <?= e($kurs['ort']) ?></p>
                                 </div>
                             <?php endif; ?>
+                            <?php if (!empty($kurs['max_teilnehmer'])): ?>
+                                <div class="fact-card">
+                                    <p class="fact-label">Teilnehmende</p>
+                                    <p class="fact-value">👥 Max. <?= e((string) $kurs['max_teilnehmer']) ?></p>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (!empty($kurs['besonderheit'])): ?>
+                                <div class="fact-card">
+                                    <p class="fact-label">Besonderheit</p>
+                                    <p class="fact-value">✨ <?= e($kurs['besonderheit']) ?></p>
+                                </div>
+                            <?php endif; ?>
                         </div>
 
                         <?php if (!empty($kurs['beschreibung'])): ?>
-                            <p class="detail-desc"><?= nl2br(e($kurs['beschreibung'])) ?></p>
+                            <p class="detail-desc"><?= renderMarkdown($kurs['beschreibung']) ?></p>
                         <?php endif; ?>
                     </div>
                 </article>
 
                 <aside class="detail-side">
                     <div class="side-head">
-                        <h3>Jetzt anmelden</h3>
+                        <h3>Jetzt Platz anfragen</h3>
                         <p>In 30 Sekunden abgeschlossen.</p>
                     </div>
                     <div class="side-body">
                         <?php if (!empty($kurs['preis'])): ?>
                             <div class="price-box">
-                                <p class="price-label">Preis</p>
+                                <p class="price-label">Investition</p>
                                 <p class="price-value">💶 <?= e($kurs['preis']) ?></p>
                             </div>
                         <?php endif; ?>
 
                         <ul class="side-points">
-                            <li>Persönliche Rückmeldung per E-Mail</li>
-                            <li>Keine automatische Newsletter-Anmeldung</li>
-                            <li>Unverbindliche Anfrage</li>
+                            <li>✓ Persönliche Rückmeldung per E-Mail</li>
+                            <li>✓ Keine automatische Newsletter-Anmeldung</li>
+                            <li>✓ Unverbindliche Anfrage</li>
                         </ul>
 
                         <form id="anmeldeForm">
                             <input type="hidden" name="kurs" value="<?= e($kurs['name'] ?? '') ?>">
 
                             <div class="field">
-                                <label for="name">Name</label>
-                                <input id="name" type="text" name="name" required placeholder="Dein vollständiger Name">
+                                <label for="name">Dein Name</label>
+                                <input id="name" type="text" name="name" required placeholder="Vollständiger Name">
                             </div>
 
                             <div class="field">
@@ -875,10 +1152,19 @@ $pageTitle = $slug !== '' && $kurs !== null
                                 <input id="email" type="email" name="email" required placeholder="deine@email.de">
                             </div>
 
-                            <button class="submit-btn" type="submit">Anmeldung absenden</button>
+                            <button class="submit-btn" type="submit">Anfrage senden</button>
                         </form>
 
                         <div id="formMsg" class="form-msg"></div>
+
+                        <?php if (!empty($kurs['telefon'])): ?>
+                            <div class="whatsapp-section">
+                                <p class="whatsapp-label">Oder per WhatsApp anfragen:</p>
+                                <a href="https://wa.me/<?= e(preg_replace('/[^0-9+]/', '', (string) ($kurs['telefon'] ?? ''))) ?>?text=Ich%20interessiere%20mich%20f%C3%BCr%20den%20Kurs%20%22<?= urlencode($kurs['name'] ?? '') ?>%22%20und%20h%C3%A4tte%20gerne%20mehr%20Informationen." target="_blank" rel="noopener noreferrer" class="button-small whatsapp" style="width: 100%; justify-content: center;">
+                                    <span>💬</span> WhatsApp Anfrage
+                                </a>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </aside>
             </section>
@@ -935,11 +1221,17 @@ $pageTitle = $slug !== '' && $kurs !== null
                             </div>
 
                             <div class="course-card-body">
+                                <?php if (!empty($entry['zielgruppe'])): ?>
+                                    <p style="font-size: 0.9rem; font-weight: 500; color: color-mix(in oklab, var(--brand-color) 80%, black);">
+                                        👥 <?= e($entry['zielgruppe']) ?>
+                                    </p>
+                                <?php endif; ?>
+
                                 <?php if (!empty($entry['beschreibung'])): ?>
                                     <p><?= e(mb_substr($entry['beschreibung'], 0, 120)) ?><?= mb_strlen((string) $entry['beschreibung']) > 120 ? ' ...' : '' ?></p>
                                 <?php endif; ?>
 
-                                <div class="chips">
+                                <div class="course-meta">
                                     <?php
                                     $entryZeiten = array_values(array_filter(array_map(
                                         static fn($slot) => is_array($slot) ? formatZeitSlot($slot) : '',
@@ -947,19 +1239,39 @@ $pageTitle = $slug !== '' && $kurs !== null
                                     )));
                                     if (empty($entryZeiten)) {
                                         $entryZeiten = array_values(array_filter(array_map(
-                                        static fn($slot) => is_array($slot) ? formatZeitSlot($slot) : '',
-                                        (array) ($entry['zeiten'] ?? [])
+                                            static fn($slot) => is_array($slot) ? formatZeitSlot($slot) : '',
+                                            (array) ($entry['zeiten'] ?? [])
                                         )));
                                     }
-                                    if (!empty($entryZeiten)) {
-                                        $previewZeiten = array_slice($entryZeiten, 0, 2);
-                                        $zeitenText = implode(', ', $previewZeiten);
-                                        if (count($entryZeiten) > 2) {
-                                            $zeitenText .= ' +'. (count($entryZeiten) - 2);
-                                        }
-                                        echo '<span class="chip">🗓 ' . e($zeitenText) . '</span>';
-                                    }
                                     ?>
+                                    
+                                    <?php if (!empty($entryZeiten)): ?>
+                                        <div class="course-meta-item">
+                                            <span class="course-meta-icon">🗓</span>
+                                            <div><strong>Termine:</strong><br><?= e($entryZeiten[0]) ?></div>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if (!empty($entry['ort'])): ?>
+                                        <div class="course-meta-item">
+                                            <span class="course-meta-icon">📍</span>
+                                            <div><strong>Ort:</strong> <?= e($entry['ort']) ?></div>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if (!empty($entry['max_teilnehmer'])): ?>
+                                        <div class="course-meta-item">
+                                            <span class="course-meta-icon">👥</span>
+                                            <div><strong>Max.:</strong> <?= e((string) $entry['max_teilnehmer']) ?> Teilnehmende</div>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if (!empty($entry['besonderheit'])): ?>
+                                        <div class="course-meta-item">
+                                            <span class="course-meta-icon">✨</span>
+                                            <div><strong>Besonderheit:</strong> <?= e($entry['besonderheit']) ?></div>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
 
@@ -970,7 +1282,14 @@ $pageTitle = $slug !== '' && $kurs !== null
                                     <span></span>
                                 <?php endif; ?>
 
-                                <a href="kurse.php?slug=<?= e($entry['slug'] ?? '') ?>" class="button primary">Zur Anmeldung</a>
+                                <div class="button-group">
+                                    <a href="kurse.php?slug=<?= e($entry['slug'] ?? '') ?>" class="button-small primary">Platz anfragen</a>
+                                    <?php if (!empty($entry['telefon'])): ?>
+                                        <a href="https://wa.me/<?= e(preg_replace('/[^0-9+]/', '', (string) ($entry['telefon'] ?? ''))) ?>?text=Ich%20interessiere%20mich%20f%C3%BCr%20den%20Kurs%20%22<?= urlencode($entry['name'] ?? '') ?>%22" target="_blank" rel="noopener noreferrer" class="button-small whatsapp" title="Auf WhatsApp anfragen">
+                                            WhatsApp
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </article>
                     <?php endforeach; ?>
@@ -978,6 +1297,12 @@ $pageTitle = $slug !== '' && $kurs !== null
             <?php endif; ?>
         <?php endif; ?>
     </main>
+
+    <?php if ($slug !== '' && $kurs !== null && $isLoggedIn): ?>
+        <a href="inside/kurs-editor.php?action=edit&slug=<?= e($kurs['slug'] ?? '') ?>" class="floating-edit-btn" title="Diesen Kurs bearbeiten">
+            <span>✏️</span> Bearbeiten
+        </a>
+    <?php endif; ?>
 
     <script>
         (function () {
@@ -995,6 +1320,7 @@ $pageTitle = $slug !== '' && $kurs !== null
                 msg.textContent = '';
 
                 btn.disabled = true;
+                const originalText = btn.textContent;
                 btn.textContent = 'Wird gesendet ...';
 
                 try {
@@ -1015,7 +1341,7 @@ $pageTitle = $slug !== '' && $kurs !== null
                     msg.classList.add('err');
                 } finally {
                     btn.disabled = false;
-                    btn.textContent = 'Anmeldung absenden';
+                    btn.textContent = originalText;
                 }
             });
         }());

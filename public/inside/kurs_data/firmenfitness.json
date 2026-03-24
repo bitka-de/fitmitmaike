@@ -1,0 +1,32 @@
+{
+    "name": "Firmenfitness: Bewegte Pause",
+    "slug": "firmenfitness",
+    "zielgruppe": "Firmen und Teams, die ihre Mitarbeiter aktivieren und entspannen möchten",
+    "beschreibung": "Maßgeschneiderte Fitnesspausen für dein Team im Büro oder online. Steigert die Produktivität, reduziert Rückenschmerzen und schafft ein Zusammengehörigkeitsgefühl. Ideal für Remote-Teams und Vor-Ort-Gruppen.",
+    "ort": "Bei dir im Unternehmen (vor Ort oder online)",
+    "termine": [
+        {
+            "datum": "2026-04-01",
+            "von": "10:00",
+            "bis": "10:20"
+        },
+        {
+            "datum": "2026-04-08",
+            "von": "10:00",
+            "bis": "10:20"
+        },
+        {
+            "datum": "2026-04-15",
+            "von": "10:00",
+            "bis": "10:20"
+        }
+    ],
+    "max_teilnehmer": "25",
+    "preis": "Auf Anfrage (ab 3 Sitzungen buchbar)",
+    "besonderheit": "Flexible Zeiteinstufung & Pausenoptimierung nach Teamgröße",
+    "niveau": "Alle Levels",
+    "telefon": "+49 721 123456",
+    "bild": "uploads/Angebote/teamwork.jpg",
+    "created_at": "2026-03-23 20:59:52",
+    "updated_at": "2026-03-24 15:30:00"
+}

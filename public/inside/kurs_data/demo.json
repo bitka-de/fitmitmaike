@@ -1,22 +1,32 @@
 {
-    "name": "Test Kurs",
-    "beschreibung": "dedjlöew erhfiheriuhfioerfhepuer lf",
+    "name": "Krafttraining für Anfänger",
     "slug": "demo",
-    "wochentage": [
-        "Mittwoch"
-    ],
+    "zielgruppe": "Anfänger ohne Trainingserfahrung, die sich fit und stark fühlen möchten",
+    "beschreibung": "Ein umfassendes Anfänger-Trainingsprogramm mit persönlicher Begleitung. Du lernst die richtigen Techniken, verstehst deine Muskulatur und erreichst schnell erste Erfolgsmomente. Perfekt für den Einstieg ins Krafttraining.",
+    "ort": "Leipzig",
     "termine": [
         {
             "datum": "2026-03-25",
-            "von": "03:24",
-            "bis": "05:24"
+            "von": "17:30",
+            "bis": "18:30"
+        },
+        {
+            "datum": "2026-03-27",
+            "von": "17:30",
+            "bis": "18:30"
+        },
+        {
+            "datum": "2026-04-01",
+            "von": "17:30",
+            "bis": "18:30"
         }
     ],
-    "niveau": "Alle Levels",
-    "max_teilnehmer": "22",
-    "ort": "Karlsruhe",
-    "preis": "22",
+    "max_teilnehmer": "12",
+    "preis": "89,00 €",
+    "besonderheit": "Inklusive kostenloses Fitnessprofil & individuelle Trainingsplanung",
+    "niveau": "Anfänger",
+    "telefon": "+49 160 98755921",
     "bild": "uploads/Einblicke-ins-Training/einblicke-1.jpeg",
     "created_at": "2026-03-23 20:59:52",
-    "updated_at": "2026-03-23 22:24:20"
+    "updated_at": "2026-03-24 15:30:00"
 }
