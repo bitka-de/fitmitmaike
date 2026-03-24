@@ -1,0 +1,22 @@
+{
+    "name": "Test Kurs",
+    "beschreibung": "dedjlöew erhfiheriuhfioerfhepuer lf",
+    "slug": "demo",
+    "wochentage": [
+        "Mittwoch"
+    ],
+    "termine": [
+        {
+            "datum": "2026-03-25",
+            "von": "03:24",
+            "bis": "05:24"
+        }
+    ],
+    "niveau": "Alle Levels",
+    "max_teilnehmer": "22",
+    "ort": "Karlsruhe",
+    "preis": "22",
+    "bild": "uploads/Einblicke-ins-Training/einblicke-1.jpeg",
+    "created_at": "2026-03-23 20:59:52",
+    "updated_at": "2026-03-23 22:24:20"
+}

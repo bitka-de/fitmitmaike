@@ -143,6 +143,12 @@ if (!isSecure()) {
             <h2>News</h2>
             <p>Zur Newsübersicht wechseln und Inhalte verwalten.</p>
         </a>
+
+        <a class="card" href="kurs-editor.php">
+            <div class="icon">🏋️</div>
+            <h2>Kurse</h2>
+            <p>Kurse anlegen, bearbeiten und verwalten.</p>
+        </a>
     </div>
 </div>
 
