@@ -329,7 +329,7 @@ $formData = [
   'ort'            => '',
   'preis'          => '',
   'besonderheit'   => '',
-  'telefon'        => '',
+  'telefon'        => '+49 160 98755921',
   'bild'           => '',
 ];
 
@@ -1126,10 +1126,10 @@ $allKurse = loadAllKurse();
   <div class="wrap">
 
     <div class="topnav">
-      <a class="btn" href="kurs-editor.php">Kurs Übersicht</a>
-      <a class="btn secondary" href="kurs-editor.php?action=create">Neuen Kurs erstellen</a>
-      <a class="btn light" href="../kurse.php">Frontend ansehen</a>
       <a class="btn light" href="dashboard.php">Dashboard</a>
+      <a class="btn" href="kurs-editor.php">Kurs Übersicht</a>
+      <a class="btn secondary" href="kurs-editor.php?action=create">+ Kurs erstellen</a>
+      <a class="btn light" href="../kurse.php">Frontend ansehen</a>
     </div>
 
     <?php if ($message !== ''): ?>

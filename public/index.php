@@ -79,7 +79,7 @@
   <!-- HEADER -->
   <header class="site-header" id="top">
     <div class="container header-bar">
-      <a href="#top" class="brand" aria-label="Startseite">
+      <a href="/" class="brand" aria-label="Startseite">
 
         <img src="img/logos/maike-kropff-2.png" />
       </a>
@@ -104,9 +104,9 @@
           href="#qualification">
           Qualifikation </a>
         <a
-          href="#contact"
+          href="kurse.php"
           class="button button--primary nav-cta">
-          Kontakt </a>
+          Kurse </a>
       </nav>
 
       <button

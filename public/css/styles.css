@@ -3352,6 +3352,462 @@ body {
   }
 }
 
+/* =========================================================
+   COURSES
+========================================================= */
+
+/* ── Layout shells ─────────────────────────────────────── */
+.courses-layout {
+  --courses-gap: clamp(1.2rem, 2vw, 2rem);
+}
+
+.courses-header {
+  margin-block: clamp(1.5rem, 3vw, 3rem);
+}
+
+/* ── Overview grid ─────────────────────────────────────── */
+.courses-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--courses-gap);
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ── Course card (overview) ────────────────────────────── */
+.course-card-clean {
+  --card-bg: #fff;
+  --card-bg-2: #f9f8f7;
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  background: linear-gradient(180deg, var(--card-bg) 0%, var(--card-bg-2) 100%);
+  border: 1px solid rgba(20, 20, 20, 0.06);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  transition:
+    transform 0.4s ease,
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 22px 48px rgba(0, 0, 0, 0.13);
+    border-color: rgba(20, 20, 20, 0.1);
+  }
+}
+
+.course-card-clean__media {
+  position: relative;
+  overflow: hidden;
+
+  img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    transition: transform 0.75s ease;
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.84) 0%,
+        rgba(0, 0, 0, 0.64) 34%,
+        rgba(0, 0, 0, 0.34) 58%,
+        rgba(0, 0, 0, 0.1) 76%,
+        transparent 100%
+      ),
+      linear-gradient(to right, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.06));
+    pointer-events: none;
+  }
+}
+
+.course-card-clean__title-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 1rem 1rem 0.85rem;
+
+  .subheadline.heading {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(1.05rem, 0.95rem + 0.65vw, 1.35rem);
+    line-height: 1.18;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  }
+}
+
+.course-card-clean:hover .course-card-clean__media img {
+  transform: scale(1.05);
+}
+
+.course-card-clean__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.15rem 1.1rem 1.25rem;
+  flex: 1;
+}
+
+.course-card-clean__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+
+  .eyebrow.heading {
+    margin: 0;
+    font-size: clamp(0.78rem, 0.72rem + 0.2vw, 0.9rem);
+    letter-spacing: 0.06em;
+    color: rgba(20, 20, 20, 0.72);
+  }
+}
+
+.course-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.75rem;
+  padding: 0.28rem 0.62rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  background: color-mix(in oklab, var(--brand-color) 14%, white);
+  color: var(--brand-color-dark-2);
+  border: 1px solid color-mix(in oklab, var(--brand-color) 32%, transparent);
+}
+
+.course-card-clean__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: auto;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.9rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.83rem;
+    font-weight: 600;
+    background: rgba(0, 0, 0, 0.06);
+    color: rgba(20, 20, 20, 0.78);
+  }
+}
+
+/* ── Detail grid ───────────────────────────────────────── */
+.course-detail-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--courses-gap);
+
+  @media (min-width: 1080px) {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+
+.course-detail-main {
+  display: grid;
+  gap: var(--courses-gap);
+
+  @media (min-width: 1080px) {
+    grid-column: span 5;
+  }
+}
+
+.course-detail-sidebar {
+  @media (min-width: 1080px) {
+    grid-column: span 3;
+  }
+}
+
+.course-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--courses-gap);
+
+  @media (min-width: 900px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ── Detail cards ──────────────────────────────────────── */
+.course-detail-card {
+  background: linear-gradient(180deg, #fff 0%, #f9f8f7 100%);
+  border: 1px solid rgba(20, 20, 20, 0.06);
+  border-radius: 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
+}
+
+.course-detail-card--hero,
+.course-detail-card--text {
+  @media (min-width: 900px) {
+    grid-column: 1 / -1;
+  }
+}
+
+.course-detail-media img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 21 / 8;
+  object-fit: cover;
+}
+
+.course-detail-body {
+  padding: 1.4rem 1.3rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+
+    @media (min-width: 1080px) {
+    position: sticky;
+    top: calc(var(--base-size) * 5.5);
+  }
+}
+
+.course-request-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+
+
+  padding: 1.2rem 1.05rem 1.25rem;
+  border-radius: 1.3rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 249, 248, 0.98)),
+    color-mix(in oklab, var(--brand-color) 6%, white);
+  border: 1px solid color-mix(in oklab, var(--brand-color) 24%, transparent);
+  box-shadow:
+    0 14px 38px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.course-request-card__price {
+  margin: 0;
+  font-size: clamp(1.5rem, 1.25rem + 0.75vw, 1.95rem);
+  line-height: 1.08;
+  font-weight: 700;
+  color: var(--brand-color-dark-2);
+}
+
+.course-request-card__actions {
+  margin-top: 0.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+
+  .button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.button-whatsapp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.72rem;
+  border: 2px solid #1f8180;
+  color: #1f8180;
+  font-size: 1rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.15s ease, box-shadow 0.18s ease;
+
+  svg {
+    width: 1.45em;
+    height: 1.45em;
+    fill: currentColor;
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(31, 129, 128, 0.3);
+    transform: translateY(-1px);
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button-whatsapp {
+    transition: none;
+  }
+}
+
+.course-request-card__note {
+  margin: 0;
+  padding: 0.75rem 0.8rem;
+  border-radius: 0.75rem;
+  background: color-mix(in oklab, var(--brand-color) 9%, transparent);
+  border: 1px solid color-mix(in oklab, var(--brand-color) 20%, transparent);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: rgba(20, 20, 20, 0.82);
+}
+
+.course-request-card__form-panel {
+  margin-top: 0.1rem;
+  padding-top: 0.2rem;
+}
+
+.course-request-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.course-request-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(20, 20, 20, 0.78);
+  }
+
+  input {
+    min-height: 2.65rem;
+    border-radius: 0.72rem;
+    border: 1px solid rgba(20, 20, 20, 0.16);
+    background: rgba(255, 255, 255, 0.92);
+    padding: 0.55rem 0.72rem;
+    font-size: 0.95rem;
+    line-height: 1.3;
+    color: var(--text-color);
+
+    &:focus {
+      outline: none;
+      border-color: color-mix(in oklab, var(--brand-color) 55%, transparent);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand-color) 18%, transparent);
+    }
+  }
+}
+
+.course-request-form__note {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: rgba(20, 20, 20, 0.74);
+}
+
+/* ── Meta & time lists ─────────────────────────────────── */
+.course-meta-list,
+.course-time-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.course-meta-list li,
+.course-time-list li {
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  font-size: var(--fs-copy);
+  line-height: 1.5;
+}
+
+.course-time-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.course-time-list__label {
+  flex: 1;
+}
+
+.course-time-list__hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.28rem 0.62rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--brand-color) 18%, white);
+  color: var(--brand-color-dark-2);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.course-time-list__item--next {
+  background: color-mix(in oklab, var(--brand-color) 16%, white);
+  border-color: color-mix(in oklab, var(--brand-color) 34%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--brand-color) 18%, transparent);
+}
+
+.course-time-list__item--past {
+  background: rgba(17, 24, 39, 0.03);
+  border-color: rgba(17, 24, 39, 0.08);
+  color: rgba(17, 24, 39, 0.48);
+}
+
+.course-time-list__item--past .course-time-list__label {
+  color: inherit;
+}
+
+@media (max-width: 640px) {
+  .course-time-list__item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+.course-time-location {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.7rem;
+  background: color-mix(in oklab, var(--brand-color) 14%, transparent);
+  border: 1px solid color-mix(in oklab, var(--brand-color) 24%, transparent);
+  color: var(--brand-color-dark-2);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+/* ── Reduced motion ────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .course-card-clean {
+    transition: none;
+
+    &:hover {
+      transform: none;
+    }
+  }
+
+  .course-card-clean__media img {
+    transition: none;
+  }
+}
+
 /**** FLOATING ****/
 .floating-cta {
   position: fixed;
@@ -3649,4 +4105,8 @@ body.legal-open {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.mt{
+  margin-top: 1.75rem;
 }
