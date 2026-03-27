@@ -460,11 +460,7 @@
               <p>
                 Für mehr Bewegung, Kraft und Spaß am Training. Funktionelle Übungen, abwechslungsreiche Workouts und eine unterstützende Atmosphäre – für alle Fitnesslevel geeignet. </p>
 
-              <div class="service-card__tags">
-                <span>Mobilität</span>
-                <span>Alltag</span>
-                <span>Wohlbefinden</span>
-              </div>
+              <a class="service-card__cta" href="kurse.php">Zu den Gruppenkursen</a>
             </div>
           </article>
 
