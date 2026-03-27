@@ -18,6 +18,7 @@ $ownerMail = 'maike.kropff-personaltraining@outlook.de';
 $name  = trim($_POST['name'] ?? '');
 $email = trim($_POST['email'] ?? '');
 $kurs  = trim($_POST['kurs'] ?? '');
+$fragen = trim($_POST['fragen'] ?? '');
 
 if (empty($name) || empty($email)) {
     echo json_encode(['success' => false, 'message' => 'Bitte Name und E-Mail ausfüllen.']);
@@ -32,6 +33,7 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 $safeName  = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
 $safeEmail = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
 $safeKurs  = htmlspecialchars($kurs, ENT_QUOTES, 'UTF-8');
+$safeFragen = htmlspecialchars($fragen, ENT_QUOTES, 'UTF-8');
 
 $mail = new PHPMailer(true);
 
@@ -97,7 +99,15 @@ try {
                                                 <a href="mailto:' . $safeEmail . '" style="color:#2563eb;text-decoration:none;">' . $safeEmail . '</a>
                                             </div>
                                         </td>
-                                    </tr>
+                                    </tr>' . ($safeFragen !== '' ? '
+                                    <tr>
+                                        <td style="padding:0 0 8px;">
+                                            <div style="font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.08em;color:#6b7280;margin-bottom:6px;">Fragen</div>
+                                            <div style="font-size:16px;color:#111827;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;white-space:pre-wrap;word-wrap:break-word;">
+                                                ' . $safeFragen . '
+                                            </div>
+                                        </td>
+                                    </tr>' : '')
                                 </table>
                             </td>
                         </tr>
@@ -135,7 +145,8 @@ try {
         "Neue Kursanmeldung\n\n" .
         "Kurs: " . $kurs . "\n" .
         "Name: " . $name . "\n" .
-        "E-Mail: " . $email . "\n";
+        "E-Mail: " . $email . "\n" .
+        ($fragen !== '' ? "Fragen: " . $fragen . "\n" : "");
 
     $mail->send();
 

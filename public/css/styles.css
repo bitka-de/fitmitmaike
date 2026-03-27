@@ -3712,7 +3712,8 @@ body {
     color: rgba(20, 20, 20, 0.78);
   }
 
-  input {
+  input,
+  textarea {
     min-height: 2.65rem;
     border-radius: 0.72rem;
     border: 1px solid rgba(20, 20, 20, 0.16);
@@ -3727,6 +3728,11 @@ body {
       border-color: color-mix(in oklab, var(--brand-color) 55%, transparent);
       box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand-color) 18%, transparent);
     }
+  }
+
+  textarea {
+    min-height: 6rem;
+    resize: vertical;
   }
 }
 

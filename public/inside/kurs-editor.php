@@ -247,12 +247,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $error = 'Bitte mindestens ein Datum mit von/bis-Zeit angeben.';
   } elseif ($ort === '') {
     $error = 'Bitte einen Ort angeben.';
-  } elseif ($preis === '') {
-    $error = 'Bitte einen Preis angeben.';
-  } elseif ($max_teilnehmer === '' || filter_var($max_teilnehmer, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+  } elseif ($max_teilnehmer !== '' && filter_var($max_teilnehmer, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
     $error = 'Bitte eine gültige maximale Kursgröße angeben.';
-  } elseif ($besonderheit === '') {
-    $error = 'Bitte eine Besonderheit angeben.';
   } else {
     $existing = loadKurs($slug);
 
@@ -299,6 +295,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
     }
   }
+
+  // Bei Fehler: action beibehalten damit Formular angezeigt wird
+  if ($error !== '') {
+    $action = $originalSlug !== '' ? 'edit' : 'create';
+  }
 }
 
 if ($action === 'delete' && $slugGet !== '') {
@@ -329,9 +330,37 @@ $formData = [
   'ort'            => '',
   'preis'          => '',
   'besonderheit'   => '',
-  'telefon'        => '+49 160 98755921',
+  'telefon'        => '+4916098755921',
   'bild'           => '',
 ];
+
+// Wenn POST-Fehler, FormData mit eingegebenen Werten füllen
+if ($error !== '' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+  $rawTermine = [];
+  for ($i = 0; $i < max(count($termineDatum), count($termineVon), count($termineBis)); $i++) {
+    $rawTermine[] = [
+      'datum' => $termineDatum[$i] ?? '',
+      'von'   => $termineVon[$i] ?? '',
+      'bis'   => $termineBis[$i] ?? '',
+    ];
+  }
+  
+  $formData = [
+    'name'           => $name,
+    'zielgruppe'     => $zielgruppe,
+    'beschreibung'   => $beschreibung,
+    'slug'           => $slug,
+    'wochentage'     => $wochentage,
+    'termine'        => $rawTermine,
+    'niveau'         => $niveau,
+    'max_teilnehmer' => $max_teilnehmer,
+    'ort'            => $ort,
+    'preis'          => $preis,
+    'besonderheit'   => $besonderheit,
+    'telefon'        => $telefon,
+    'bild'           => $bild,
+  ];
+}
 
 if ($action === 'edit' && $slugGet !== '') {
   $kurs = loadKurs($slugGet);
@@ -1241,14 +1270,14 @@ $allKurse = loadAllKurse();
 
             <div class="form-row">
               <div class="form-group">
-                <label for="max_teilnehmer">👥 Max. Teilnehmer *</label>
-                <input type="number" id="max_teilnehmer" name="max_teilnehmer" min="1" value="<?= e($formData['max_teilnehmer'] ?? '') ?>" required placeholder="z. B. 12">
+                <label for="max_teilnehmer">👥 Max. Teilnehmer</label>
+                <input type="number" id="max_teilnehmer" name="max_teilnehmer" min="1" value="<?= e($formData['max_teilnehmer'] ?? '') ?>" placeholder="z. B. 12">
                 <div class="form-help">Wie viele Plätze gibt es?</div>
               </div>
 
               <div class="form-group">
-                <label for="preis">💶 Preis *</label>
-                <input type="text" id="preis" name="preis" value="<?= e($formData['preis'] ?? '') ?>" required placeholder="z. B. 89,00 € oder Auf Anfrage">
+                <label for="preis">💶 Preis</label>
+                <input type="text" id="preis" name="preis" value="<?= e($formData['preis'] ?? '') ?>" placeholder="z. B. 89,00 € oder Auf Anfrage">
                 <div class="form-help">Mit Einheit (€, €/Monat, etc.)</div>
               </div>
             </div>
@@ -1306,8 +1335,8 @@ $allKurse = loadAllKurse();
             </div>
 
             <div class="form-group">
-              <label for="besonderheit">Besonderheit / Bonus *</label>
-              <input type="text" id="besonderheit" name="besonderheit" value="<?= e($formData['besonderheit'] ?? '') ?>" required placeholder="z. B. Inklusive kostenloses Fitnessprofil & Trainingsplanung">
+              <label for="besonderheit">Besonderheit / Bonus</label>
+              <input type="text" id="besonderheit" name="besonderheit" value="<?= e($formData['besonderheit'] ?? '') ?>" placeholder="z. B. Inklusive kostenloses Fitnessprofil & Trainingsplanung">
               <div class="form-help">Ein Highlight oder Bonus, das deinen Kurs besonders macht</div>
             </div>
 

@@ -497,6 +497,11 @@ $pageTitle = $slug !== '' && $kurs !== null
                                         <input id="email" type="email" name="email" required placeholder="deine@email.de" autocomplete="email">
                                     </div>
 
+                                    <div class="course-request-form__field">
+                                        <label for="fragen">Fragen zum Kurs (optional)</label>
+                                        <textarea id="fragen" name="fragen" placeholder="Hast du Fragen zum Kurs? Schreib sie hier auf..."></textarea>
+                                    </div>
+
                                     <button class="button big primary submit-btn" type="submit">Anfrage senden</button>
 
                                     <p class="course-request-form__note">Unverbindlich und kostenlos. Du erhältst zeitnah eine persönliche Rückmeldung per E-Mail.</p>
