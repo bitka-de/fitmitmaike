@@ -145,6 +145,9 @@
           href="#service">
           Angebote </a>
         <a
+          href="kurse.php">
+          Kurse </a>
+        <a
           href="#news">
           News </a>
         <a
